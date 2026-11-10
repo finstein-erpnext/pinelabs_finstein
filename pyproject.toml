@@ -1,5 +1,5 @@
 [project]
-name = "pinelabs_fin"
+name = "pinelabs_finstein"
 authors = [
     { name = "Finstein", email = "bharathiraja.b@finstein.ai" }
 ]
