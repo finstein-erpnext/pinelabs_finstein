@@ -33,9 +33,12 @@ def _scrub(text):
 def execute():
 	if frappe.db.has_table("Pinelabs Transaction"):
 		for field in ("request_payload", "response_payload"):
-			rows = frappe.db.sql(
-				f"select name, `{field}` from `tabPinelabs Transaction` where `{field}` like %s",  # nosec
-				("%SecurityToken%",),
+			rows = frappe.get_all(
+				"Pinelabs Transaction",
+				filters={field: ("like", "%SecurityToken%")},
+				fields=["name", field],
+				as_list=True,
+				ignore_permissions=True,
 			)
 			for name, value in rows:
 				cleaned = _scrub(value or "")

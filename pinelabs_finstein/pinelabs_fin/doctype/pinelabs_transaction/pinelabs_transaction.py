@@ -25,8 +25,8 @@ _ALLOWED_TRANSITIONS = {
 	"INITIATED": {"PENDING", "SUCCESS", "FAILED", "CANCELLED"},
 	"PENDING": {"SUCCESS", "FAILED", "CANCELLED"},
 	"SUCCESS": set(),  # terminal
-	"FAILED": set(),    # terminal
-	"CANCELLED": set(), # terminal
+	"FAILED": set(),  # terminal
+	"CANCELLED": set(),  # terminal
 }
 
 
@@ -128,9 +128,9 @@ class PinelabsTransaction(Document):
 		)
 		if not exists:
 			frappe.throw(
-				_("Machine {0} is not configured in Pinelabs Settings. Add it under Pinelabs Settings → Machines first.").format(
-					self.machine
-				),
+				_(
+					"Machine {0} is not configured in Pinelabs Settings. Add it under Pinelabs Settings → Machines first."
+				).format(self.machine),
 			)
 
 	def before_insert(self):
@@ -200,7 +200,7 @@ class PinelabsTransaction(Document):
 			if changed:
 				frappe.throw(
 					_("{0} is set by the Pinelabs transaction service and cannot be edited manually.").format(
-						self.meta.get_label(field)
+						_(self.meta.get_label(field))
 					),
 				)
 

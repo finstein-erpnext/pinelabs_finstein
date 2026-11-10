@@ -55,7 +55,9 @@ def assert_gateway_url(url, label, verify_ssl=True):
 	relaxed = _relaxed(host)
 	if parsed.scheme != "https" and not relaxed:
 		frappe.throw(
-			_("{0} must use https. Plain http is only allowed for localhost or in developer mode.").format(label)
+			_("{0} must use https. Plain http is only allowed for localhost or in developer mode.").format(
+				label
+			)
 		)
 	if not verify_ssl and not relaxed:
 		frappe.throw(

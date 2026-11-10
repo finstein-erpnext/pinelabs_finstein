@@ -24,9 +24,9 @@ _DEFAULT_COUNTRY_CODE = "91"
 
 _FLOW_TO_METHODS = {
 	"all_methods": None,  # don't restrict — Plural shows everything enabled on dashboard
-	"card_only":   ["CARD"],
-	"upi_only":    ["UPI"],
-	"nb_only":     ["NETBANKING"],
+	"card_only": ["CARD"],
+	"upi_only": ["UPI"],
+	"nb_only": ["NETBANKING"],
 }
 
 
@@ -64,8 +64,12 @@ def initiate_payment_link(
 	from pinelabs_finstein.api import access
 	from pinelabs_finstein.api import transaction as txn_service
 
-	print(f"[PineLabs PayByLink] Initiate: reference_doctype={reference_doctype} reference_name={reference_name} flow={flow} expiry_minutes={expiry_minutes}")
-	frappe.logger("pinelabs_paybylink", file_count=5).info(f"[PineLabs PayByLink] Initiate: reference_doctype={reference_doctype} reference_name={reference_name} flow={flow} expiry_minutes={expiry_minutes}")
+	print(
+		f"[PineLabs PayByLink] Initiate: reference_doctype={reference_doctype} reference_name={reference_name} flow={flow} expiry_minutes={expiry_minutes}"
+	)
+	frappe.logger("pinelabs_paybylink", file_count=5).info(
+		f"[PineLabs PayByLink] Initiate: reference_doctype={reference_doctype} reference_name={reference_name} flow={flow} expiry_minutes={expiry_minutes}"
+	)
 
 	if flow not in _FLOW_TO_METHODS:
 		frappe.throw(_("Unknown flow: {0}").format(flow))
@@ -75,9 +79,7 @@ def initiate_payment_link(
 	# contacted. Neither the master 'Enabled' switch nor 'Enable Payment Links'
 	# reached this endpoint before — they only hid the button — so a link could
 	# be created and SMS'd to a customer with the integration switched off.
-	access.assert_initiate_allowed(
-		reference_doctype, reference_name, flow="Plural", source_doc=source_doc
-	)
+	access.assert_initiate_allowed(reference_doctype, reference_name, flow="Plural", source_doc=source_doc)
 	# Fail fast BEFORE we ask Plural to deliver a link — if finalization
 	# won't work for this doctype, the customer should never see the link.
 	txn_service.validate_finalization_ready(reference_doctype)
@@ -263,7 +265,7 @@ def _initiate_payment_link(*, source_doc, amount, customer, flow, expiry_minutes
 
 	# Resolve a payment_method label *only* when the link is restricted to one.
 	# For all_methods we leave it blank — the webhook fills it in based on what the customer used.
-	preset_method = (allowed_methods[0] if allowed_methods and len(allowed_methods) == 1 else None)
+	preset_method = allowed_methods[0] if allowed_methods and len(allowed_methods) == 1 else None
 	method_label = {"CARD": "CARD", "UPI": "UPI", "NETBANKING": "NB"}.get(preset_method)
 
 	# Create the transaction FIRST so we have a unique per-attempt id
@@ -338,7 +340,9 @@ def _sent_merchant_reference(txn):
 	return txn.name
 
 
-def _build_payment_link_payload(*, merchant_ref, amount, expiry_minutes, customer, allowed_methods, description_ref=None):
+def _build_payment_link_payload(
+	*, merchant_ref, amount, expiry_minutes, customer, allowed_methods, description_ref=None
+):
 	# merchant_ref is the unique per-attempt id (Pinelabs Transaction name) so
 	# Plural can tell two links for the same invoice apart. description_ref keeps
 	# the human-readable invoice name in the customer-facing description.
@@ -381,7 +385,12 @@ def _get_customer_details(doc):
 	# Priority 2: well-known direct fields on the source doc.
 	mobile = mobile or doc.get("contact_mobile") or doc.get("mobile_no") or doc.get("phone")
 	email = email or doc.get("contact_email") or doc.get("email_id") or doc.get("email")
-	name = doc.get("customer_name") or doc.get("party_name") or doc.get("contact_display") or doc.get("full_name")
+	name = (
+		doc.get("customer_name")
+		or doc.get("party_name")
+		or doc.get("contact_display")
+		or doc.get("full_name")
+	)
 	country_code = doc.get("phone_country_code") or doc.get("country_code") or _DEFAULT_COUNTRY_CODE
 
 	# Priority 3: linked Contact doc (default contact for the customer/party).
@@ -426,6 +435,7 @@ def _find_contact(doc):
 	if not (party and party_type):
 		return None
 	from frappe.contacts.doctype.contact.contact import get_default_contact
+
 	contact_name = get_default_contact(party_type, party)
 	if contact_name:
 		try:
@@ -451,7 +461,9 @@ def _load_eligible_source(reference_doctype, reference_name):
 	access.assert_can_pay(reference_doctype, reference_name)
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	if cint(getattr(doc, "docstatus", 0)) != 1:
-		frappe.throw(_("{0} {1} must be submitted to send a payment link.").format(reference_doctype, reference_name))
+		frappe.throw(
+			_("{0} {1} must be submitted to send a payment link.").format(reference_doctype, reference_name)
+		)
 	return doc
 
 

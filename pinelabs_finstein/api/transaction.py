@@ -96,9 +96,9 @@ def validate_finalization_ready(reference_doctype):
 	config = _get_payable_config(reference_doctype)
 	if not config:
 		frappe.throw(
-			_("Pine Labs payments are not configured for {0}. Add it under Pinelabs Settings → Payable Documents first.").format(
-				reference_doctype
-			),
+			_(
+				"Pine Labs payments are not configured for {0}. Add it under Pinelabs Settings → Payable Documents first."
+			).format(reference_doctype),
 		)
 
 	if reference_doctype in PE_NATIVE_DOCTYPES:
@@ -106,7 +106,9 @@ def validate_finalization_ready(reference_doctype):
 
 	if cint(config.get("finalize_via_payment_entry", 1)):
 		frappe.throw(
-			_("Cannot accept Pine Labs payments on {0}: it is not Sales Invoice / POS Invoice / Payment Request, but its Payable Documents row has 'Create Payment Entry' ticked. ERPNext's Payment Entry builder does not support {0}, so finalization would fail after the customer paid. Fix, pick one: (a) open the row in Pinelabs Settings → Payable Documents and untick 'Create Payment Entry' — the payment is still recorded, no Payment Entry is posted; or (b) leave it unticked and call the API with create_payment_entry=1, which builds a standalone Payment Entry for this doctype (it needs a Customer and a Company to resolve).").format(reference_doctype),
+			_(
+				"Cannot accept Pine Labs payments on {0}: it is not Sales Invoice / POS Invoice / Payment Request, but its Payable Documents row has 'Create Payment Entry' ticked. ERPNext's Payment Entry builder does not support {0}, so finalization would fail after the customer paid. Fix, pick one: (a) open the row in Pinelabs Settings → Payable Documents and untick 'Create Payment Entry' — the payment is still recorded, no Payment Entry is posted; or (b) leave it unticked and call the API with create_payment_entry=1, which builds a standalone Payment Entry for this doctype (it needs a Customer and a Company to resolve)."
+			).format(reference_doctype),
 		)
 
 
@@ -252,7 +254,9 @@ def mark_pending(transaction, *, order_id=None, payment_id=None, response_payloa
 	return transaction
 
 
-def mark_success(transaction, *, payment_id, payment_method=None, response_payload=None, request_payload=None):
+def mark_success(
+	transaction, *, payment_id, payment_method=None, response_payload=None, request_payload=None
+):
 	"""Mark transaction SUCCESS and create the Payment Entry idempotently.
 
 	This is the ONLY path that creates Payment Entries. Wraps the PE creation
@@ -464,10 +468,7 @@ def get_plural_mode_of_payment():
 	name = PINELABS_PLURAL_MODE
 	if not frappe.db.exists("Mode of Payment", name):
 		frappe.throw(
-			_(
-				"Mode of Payment '{0}' is missing. Run "
-				"`bench --site <site> migrate` to seed it."
-			).format(name),
+			_("Mode of Payment '{0}' is missing. Run `bench --site <site> migrate` to seed it.").format(name),
 		)
 	return name
 
@@ -523,7 +524,9 @@ def will_create_payment_entry(reference_doctype, override=None):
 	return True
 
 
-def assert_mode_has_account_mapped(mode_of_payment, company, *, reference_doctype=None, reference_name=None, create_payment_entry=None):
+def assert_mode_has_account_mapped(
+	mode_of_payment, company, *, reference_doctype=None, reference_name=None, create_payment_entry=None
+):
 	"""Throw if ``Mode of Payment → Accounts`` has no row for this company.
 
 	ERPNext's ``get_payment_entry`` won't be able to post the credit leg of
@@ -546,9 +549,7 @@ def assert_mode_has_account_mapped(mode_of_payment, company, *, reference_doctyp
 	"""
 	override = normalize_create_payment_entry(create_payment_entry)
 
-	if reference_doctype is not None and not will_create_payment_entry(
-		reference_doctype, override=override
-	):
+	if reference_doctype is not None and not will_create_payment_entry(reference_doctype, override=override):
 		# Mapped-field or permissive path — no PE will be posted, so the
 		# Mode of Payment's account doesn't need to be configured.
 		return
@@ -556,10 +557,7 @@ def assert_mode_has_account_mapped(mode_of_payment, company, *, reference_doctyp
 	if not company and override == "Yes":
 		# Custom doctype with no company field — match the finalize-time
 		# builder's fallback chain so we catch the same misconfig now.
-		company = (
-			frappe.defaults.get_user_default("company")
-			or frappe.defaults.get_global_default("company")
-		)
+		company = frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company")
 
 	if not (mode_of_payment and company):
 		# Caller didn't provide enough context to check — better to skip
@@ -586,11 +584,7 @@ def assert_mode_has_account_mapped(mode_of_payment, company, *, reference_doctyp
 	# without one. Catching this here prevents the customer from getting
 	# stuck at "Waiting for terminal" only for the PE creation to fail with
 	# "Party Type is mandatory" after they've paid.
-	if (
-		override == "Yes"
-		and reference_doctype
-		and reference_doctype not in PE_NATIVE_DOCTYPES
-	):
+	if override == "Yes" and reference_doctype and reference_doctype not in PE_NATIVE_DOCTYPES:
 		source_doc = None
 		if reference_name and frappe.db.exists(reference_doctype, reference_name):
 			source_doc = frappe.get_doc(reference_doctype, reference_name)
@@ -696,9 +690,9 @@ def _create_payment_entry_idempotent(transaction):
 		if not config:
 			return None
 		frappe.throw(
-			_("PE creation supports Sales Invoice / POS Invoice / Payment Request only. Got {0}. Either add support or set Create Payment Entry to 0 on this doctype's Payable Doctypes row.").format(
-				transaction.reference_doctype
-			),
+			_(
+				"PE creation supports Sales Invoice / POS Invoice / Payment Request only. Got {0}. Either add support or set Create Payment Entry to 0 on this doctype's Payable Doctypes row."
+			).format(transaction.reference_doctype),
 		)
 
 	source = frappe.get_doc(transaction.reference_doctype, transaction.reference_name)
@@ -769,7 +763,7 @@ def _create_payment_entry_idempotent(transaction):
 	pe.paid_amount = flt(transaction.amount)
 	pe.received_amount = flt(transaction.amount)
 	pe.reference_no = transaction.payment_id
-	pe.reference_date = (transaction.completed_at or now_datetime())
+	pe.reference_date = transaction.completed_at or now_datetime()
 	pe.remarks = (
 		f"Pine Labs {transaction.flow_type} payment "
 		f"({transaction.payment_method or 'unknown method'}) "
@@ -808,10 +802,7 @@ def _resolve_pe_party_for_custom_doctype(source_doc):
 		party = getattr(source_doc, "customer", None) or getattr(source_doc, "party", None)
 		if party:
 			return party
-	return (
-		frappe.defaults.get_user_default("customer")
-		or frappe.defaults.get_global_default("customer")
-	)
+	return frappe.defaults.get_user_default("customer") or frappe.defaults.get_global_default("customer")
 
 
 def _build_custom_doctype_pe(transaction):
@@ -891,17 +882,14 @@ def _build_custom_doctype_pe(transaction):
 			)
 
 	if not paid_from:
-		paid_from = (
-			frappe.db.get_value(
-				"Account",
-				{"company": company, "account_type": "Temporary", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "root_type": "Income", "is_group": 0},
-				"name",
-			)
+		paid_from = frappe.db.get_value(
+			"Account",
+			{"company": company, "account_type": "Temporary", "is_group": 0},
+			"name",
+		) or frappe.db.get_value(
+			"Account",
+			{"company": company, "root_type": "Income", "is_group": 0},
+			"name",
 		)
 
 	if not paid_from:
@@ -925,7 +913,7 @@ def _build_custom_doctype_pe(transaction):
 	pe.paid_from = paid_from
 	pe.paid_to = mode_account
 	pe.reference_no = transaction.payment_id
-	pe.reference_date = (transaction.completed_at or now_datetime())
+	pe.reference_date = transaction.completed_at or now_datetime()
 	pe.remarks = (
 		f"Pine Labs {transaction.flow_type} payment "
 		f"({transaction.payment_method or 'unknown method'}) "
@@ -953,7 +941,7 @@ def _get_payable_config(reference_doctype):
 		settings = frappe.get_single("Pinelabs Settings")
 	except Exception:
 		return None
-	for row in (settings.payable_doctypes or []):
+	for row in settings.payable_doctypes or []:
 		if row.doctype_name != reference_doctype:
 			continue
 		return {

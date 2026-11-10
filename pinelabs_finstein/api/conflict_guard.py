@@ -35,7 +35,7 @@ def refuse_if_pinelabs_active(doc, method=None):
 		return
 
 	# Walk references; block if ANY one has an active Pinelabs Transaction.
-	for ref in (doc.references or []):
+	for ref in doc.references or []:
 		if not (ref.reference_doctype and ref.reference_name):
 			continue
 		active = frappe.db.get_value(

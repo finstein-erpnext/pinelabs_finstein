@@ -53,7 +53,7 @@ def handle_webhook():
 		# a Payment Entry, which reads the Account doctype — not permitted for
 		# the Guest user this allow_guest endpoint otherwise runs as. Elevate
 		# for the rest of the handler; restored in the finally below.
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- only after the HMAC check above
 
 		raw_body = frappe.request.get_data(as_text=True) or ""
 		try:
@@ -124,7 +124,9 @@ def handle_webhook():
 		if decision == "paid":
 			payment_id = payload.get("payment_id") or payload.get("transaction_id") or order_id
 			payment_method = _extract_method(payload)
-			_log_decision("paid → mark_success", txn_name, payment_id=payment_id, payment_method=payment_method)
+			_log_decision(
+				"paid → mark_success", txn_name, payment_id=payment_id, payment_method=payment_method
+			)
 			txn_service.mark_success(
 				txn,
 				payment_id=payment_id,
@@ -167,7 +169,7 @@ def handle_webhook():
 		frappe.log_error(frappe.get_traceback(), "Pinelabs Plural Webhook")
 		return _respond(500, str(exc))
 	finally:
-		frappe.set_user(original_user)
+		frappe.set_user(original_user)  # nosemgrep: frappe-setuser -- restores the caller's own user
 
 
 # ──────────────────────────────────────────────────────────────────────────

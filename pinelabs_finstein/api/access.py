@@ -86,26 +86,26 @@ def assert_doctype_payable(reference_doctype, flow):
 	config = txn_service._get_payable_config(reference_doctype)
 	if not config:
 		frappe.throw(
-			_("Pine Labs payments are not configured for {0}. Add it under Pinelabs Settings → Payable Documents first.").format(
-				reference_doctype
-			),
+			_(
+				"Pine Labs payments are not configured for {0}. Add it under Pinelabs Settings → Payable Documents first."
+			).format(reference_doctype),
 			title=_("Document Type Not Configured"),
 		)
 
 	if not cint(config.get("is_enabled")):
 		frappe.throw(
-			_("Pine Labs payments are disabled for {0}. Tick 'Enabled' on its row in Pinelabs Settings → Payable Documents.").format(
-				reference_doctype
-			),
+			_(
+				"Pine Labs payments are disabled for {0}. Tick 'Enabled' on its row in Pinelabs Settings → Payable Documents."
+			).format(reference_doctype),
 			title=_("Document Type Disabled"),
 		)
 
 	toggle_field, label = _FLOW_TOGGLE.get(flow, (None, None))
 	if toggle_field and not cint(config.get(toggle_field, 1)):
 		frappe.throw(
-			_("'{0}' is disabled for {1}. Tick it on the {1} row in Pinelabs Settings → Payable Documents.").format(
-				label, reference_doctype
-			),
+			_(
+				"'{0}' is disabled for {1}. Tick it on the {1} row in Pinelabs Settings → Payable Documents."
+			).format(label, reference_doctype),
 			title=_("Payment Method Disabled"),
 		)
 
@@ -155,9 +155,9 @@ def assert_can_pay(reference_doctype, reference_name, source_doc=None):
 		and not frappe.permissions.has_permission(reference_doctype, "submit", doc=doc, print_logs=False)
 	):
 		frappe.throw(
-			_("{0} {1} is a draft and a payment would submit it; you do not have permission to submit {0}.").format(
-				reference_doctype, reference_name
-			),
+			_(
+				"{0} {1} is a draft and a payment would submit it; you do not have permission to submit {0}."
+			).format(reference_doctype, reference_name),
 			frappe.PermissionError,
 		)
 

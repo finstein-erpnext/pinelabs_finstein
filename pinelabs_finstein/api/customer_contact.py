@@ -125,7 +125,7 @@ def _find_mapping_row(doctype):
 		settings = frappe.get_single("Pinelabs Settings")
 	except Exception:
 		return None
-	for row in (settings.payable_doctypes or []):
+	for row in settings.payable_doctypes or []:
 		if row.doctype_name != doctype:
 			continue
 		if not cint(getattr(row, "is_enabled", 0)):
@@ -243,38 +243,48 @@ def list_doctype_fields(doctype: str) -> dict:
 			out["reference_fields"].append(described)
 
 	out["link_fields"].sort(key=lambda f: f["fieldname"])
-	out["mobile_fields"].sort(key=_keyword_sort_key(
-		priority_names=("contact_mobile", "mobile_no", "mobile", "phone"),
-		keywords=("mobile", "phone"),
-	))
-	out["email_fields"].sort(key=_keyword_sort_key(
-		priority_names=("contact_email", "email_id", "email"),
-		keywords=("email",),
-	))
-	out["amount_fields"].sort(key=_keyword_sort_key(
-		priority_names=(
-			"outstanding_amount",
-			"grand_total",
-			"base_grand_total",
-			"base_outstanding_amount",
-			"total",
-			"paid_amount",
-			"amount",
-		),
-		keywords=("amount", "total"),
-	))
-	out["status_fields"].sort(key=_keyword_sort_key(
-		priority_names=("status", "workflow_state"),
-		keywords=("status", "state", "workflow"),
-	))
-	out["reference_fields"].sort(key=_keyword_sort_key(
-		priority_names=(
-			"pinelabs_order_id",
-			"pinelabs_transaction_id",
-			"pinelabs_payment_id",
-		),
-		keywords=("pinelabs", "transaction", "reference", "ref"),
-	))
+	out["mobile_fields"].sort(
+		key=_keyword_sort_key(
+			priority_names=("contact_mobile", "mobile_no", "mobile", "phone"),
+			keywords=("mobile", "phone"),
+		)
+	)
+	out["email_fields"].sort(
+		key=_keyword_sort_key(
+			priority_names=("contact_email", "email_id", "email"),
+			keywords=("email",),
+		)
+	)
+	out["amount_fields"].sort(
+		key=_keyword_sort_key(
+			priority_names=(
+				"outstanding_amount",
+				"grand_total",
+				"base_grand_total",
+				"base_outstanding_amount",
+				"total",
+				"paid_amount",
+				"amount",
+			),
+			keywords=("amount", "total"),
+		)
+	)
+	out["status_fields"].sort(
+		key=_keyword_sort_key(
+			priority_names=("status", "workflow_state"),
+			keywords=("status", "state", "workflow"),
+		)
+	)
+	out["reference_fields"].sort(
+		key=_keyword_sort_key(
+			priority_names=(
+				"pinelabs_order_id",
+				"pinelabs_transaction_id",
+				"pinelabs_payment_id",
+			),
+			keywords=("pinelabs", "transaction", "reference", "ref"),
+		)
+	)
 
 	return out
 
@@ -334,4 +344,5 @@ def _keyword_sort_key(priority_names=(), keywords=()):
 		if any(k in name for k in keywords):
 			return (2, 0, name)
 		return (3, 0, name)
+
 	return _key

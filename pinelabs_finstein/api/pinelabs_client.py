@@ -61,21 +61,19 @@ class PineLabsClient:
 
 		# If no machine_name yet, fall back to the first enabled machine.
 		if not machine_name:
-			for m in (self.settings.machines or []):
+			for m in self.settings.machines or []:
 				if m.enabled:
 					machine_name = m.machine_name
 					break
 
 		if not machine_name:
 			frappe.throw(
-				_("No Pinelabs machine configured. "
-				  "Please add at least one machine in Pinelabs Settings.")
+				_("No Pinelabs machine configured. Please add at least one machine in Pinelabs Settings.")
 			)
 
 		# Load machine configuration from child table.
 		self.machine = self._load_machine_from_child_table(machine_name)
 		self.machine_name = machine_name
-
 
 	def _load_machine_from_child_table(self, machine_name):
 		"""Load machine configuration from settings child table"""
@@ -105,16 +103,19 @@ class PineLabsClient:
 
 		if not active_endpoint:
 			frappe.throw(
-				_("No active API endpoint configured in Pinelabs Settings. "
-				  "Please add at least one active endpoint.")
+				_(
+					"No active API endpoint configured in Pinelabs Settings. "
+					"Please add at least one active endpoint."
+				)
 			)
 
-		self.base_url = (
-			getattr(active_endpoint, "base_api_url", None)
-			or getattr(active_endpoint, "api_url", None)
+		self.base_url = getattr(active_endpoint, "base_api_url", None) or getattr(
+			active_endpoint, "api_url", None
 		)
 		if not self.base_url:
-			frappe.throw(_("Active API endpoint URL is not configured for machine '{0}'").format(machine_name))
+			frappe.throw(
+				_("Active API endpoint URL is not configured for machine '{0}'").format(machine_name)
+			)
 
 		# SSL verification per-endpoint. Default True (secure). UAT
 		# environments with self-signed certs can opt out by setting
@@ -150,8 +151,7 @@ class PineLabsClient:
 		# (e.g. terminal stuck/frozen). If the field is blank or missing on
 		# the active endpoint, the fallback is disabled.
 		self.force_cancel_endpoint = (
-			getattr(active_endpoint, "force_cancel_transaction_endpoint", None)
-			or None
+			getattr(active_endpoint, "force_cancel_transaction_endpoint", None) or None
 		)
 
 		# Store credentials from machine
@@ -172,7 +172,9 @@ class PineLabsClient:
 		# Validate required credentials
 		if not all([self.merchant_id, self.security_token, self.client_id, self.store_id]):
 			frappe.throw(
-				_("Please configure all required Pine Labs credentials for machine '{0}'").format(machine_name)
+				_("Please configure all required Pine Labs credentials for machine '{0}'").format(
+					machine_name
+				)
 			)
 
 		return machine
@@ -204,22 +206,18 @@ class PineLabsClient:
 			return {
 				"success": False,
 				"error": _("Request timeout - Pine Labs server did not respond"),
-				"status_code": 0
+				"status_code": 0,
 			}
 		elif isinstance(exception, requests.exceptions.ConnectionError):
 			frappe.logger().error("Pine Labs API connection error")
 			return {
 				"success": False,
 				"error": _("Connection error - Unable to reach Pine Labs server"),
-				"status_code": 0
+				"status_code": 0,
 			}
 		else:
 			frappe.logger().error(f"Pine Labs API error: {exception!s}")
-			return {
-				"success": False,
-				"error": str(exception),
-				"status_code": 0
-			}
+			return {"success": False, "error": str(exception), "status_code": 0}
 
 	def _parse_transaction_data_array(self, transaction_data_array):
 		"""
@@ -306,7 +304,7 @@ class PineLabsClient:
 			"success": response.status_code == 200,
 			"status_code": response.status_code,
 			"data": response_data,
-			"raw_response": response.text
+			"raw_response": response.text,
 		}
 
 	def _make_request(self, endpoint, payload):
@@ -322,9 +320,7 @@ class PineLabsClient:
 		"""
 		url, headers = self._prepare_request(endpoint, payload)
 		# Payload carries SecurityToken — mask before it hits the log file.
-		frappe.logger().info(
-			f"Pine Labs API Request to {url}: {json.dumps(redact(payload), indent=2)}"
-		)
+		frappe.logger().info(f"Pine Labs API Request to {url}: {json.dumps(redact(payload), indent=2)}")
 
 		try:
 			# SSL verification is per-endpoint (defaults to True). UAT
@@ -354,7 +350,7 @@ class PineLabsClient:
 		amount_in_paisa = int(float(amount) * 100)
 
 		# Get auto-cancel duration (from machine or settings)
-		auto_cancel_duration = getattr(self, 'auto_cancel_duration', 1)
+		auto_cancel_duration = getattr(self, "auto_cancel_duration", 1)
 
 		payload = {
 			"MerchantID": str(self.merchant_id),
@@ -369,7 +365,7 @@ class PineLabsClient:
 			"UserID": str(frappe.session.user),
 			"AutoCancelDurationInMinutes": int(auto_cancel_duration),
 			"ForceCancelOnBack": False,
-			"IsMQTTDisabled": False
+			"IsMQTTDisabled": False,
 		}
 
 		# # Add DeviceNumber if configured
@@ -494,7 +490,6 @@ class PineLabsClient:
 	# Plural API plumbing — moved to ``api/plural_client.py``.
 	# Use ``from pinelabs_finstein.api.plural_client import get_plural_client``.
 	# ─────────────────────────────────────────────────────────────────────
-
 
 
 # Utility function to get client instance

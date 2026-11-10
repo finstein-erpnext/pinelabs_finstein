@@ -81,9 +81,7 @@ def initiate_terminal_payment(
 	# is contacted. Previously these were enforced only in the browser, so the
 	# endpoint charged cards for doctypes that were switched off and for users
 	# with no rights to the document.
-	access.assert_initiate_allowed(
-		reference_doctype, reference_name, flow="Terminal", source_doc=source_doc
-	)
+	access.assert_initiate_allowed(reference_doctype, reference_name, flow="Terminal", source_doc=source_doc)
 	# Fail fast BEFORE we contact Pine Labs — if finalization won't work for
 	# this doctype, the customer should never be asked to tap their card.
 	txn_service.validate_finalization_ready(reference_doctype)
@@ -133,11 +131,15 @@ def initiate_terminal_payment(
 		)
 
 	machine = resolve_machine_for_context(
-		reference_doctype, reference_name, source_doc=source_doc,
+		reference_doctype,
+		reference_name,
+		source_doc=source_doc,
 	)
 	if not machine:
 		frappe.throw(
-			_("No Pinelabs machine resolves for this transaction. Configure machine mappings in Pinelabs Machine Mapping, or mark one machine as Is Default in Pinelabs Settings."),
+			_(
+				"No Pinelabs machine resolves for this transaction. Configure machine mappings in Pinelabs Machine Mapping, or mark one machine as Is Default in Pinelabs Settings."
+			),
 		)
 
 	terminal_method = _terminal_method_label(mode_doc)
@@ -214,7 +216,9 @@ def initiate_terminal_payment(
 			response_payload=response_data,
 			request_payload=request_payload,
 		)
-		return _shape(success=True, txn=txn, response_code=response_code, message=response_data.get("ResponseMessage"))
+		return _shape(
+			success=True, txn=txn, response_code=response_code, message=response_data.get("ResponseMessage")
+		)
 
 	# Synchronous decline.
 	txn = txn_service.mark_failed(
@@ -223,7 +227,9 @@ def initiate_terminal_payment(
 		response_payload=response_data,
 		request_payload=request_payload,
 	)
-	return _shape(success=False, txn=txn, response_code=response_code, message=response_data.get("ResponseMessage"))
+	return _shape(
+		success=False, txn=txn, response_code=response_code, message=response_data.get("ResponseMessage")
+	)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -269,7 +275,8 @@ def poll_terminal_status(transaction_name: str, create_payment_entry: int | None
 				transaction_name,
 				("status", "error_message"),
 				as_dict=True,
-			) or {}
+			)
+			or {}
 		)
 		return {
 			"success": True,
@@ -313,7 +320,12 @@ def check_terminal_status(transaction_name: str, create_payment_entry: int | Non
 	if txn.status in ("SUCCESS", "FAILED", "CANCELLED"):
 		return {"success": True, "status": txn.status, "response_code": None, "message": "terminal state"}
 	if not txn.payment_id:
-		return {"success": False, "status": txn.status, "response_code": None, "message": "PlutusTransactionReferenceID missing"}
+		return {
+			"success": False,
+			"status": txn.status,
+			"response_code": None,
+			"message": "PlutusTransactionReferenceID missing",
+		}
 
 	client = get_pinelabs_client(machine_name=txn.machine)
 	response = client.get_status_raw(txn.payment_id)
@@ -346,7 +358,12 @@ def check_terminal_status(transaction_name: str, create_payment_entry: int | Non
 		# us in the meantime, bail out and report the new state.
 		txn = txn_service._lock_and_reload(txn)
 		if txn.status in ("SUCCESS", "FAILED", "CANCELLED"):
-			return {"success": True, "status": txn.status, "response_code": response_code, "message": "already finalized"}
+			return {
+				"success": True,
+				"status": txn.status,
+				"response_code": response_code,
+				"message": "already finalized",
+			}
 		txn.response_payload = frappe.as_json(response_data, indent=2)
 		txn.flags.pinelabs_internal_transition = True
 		txn.save(ignore_permissions=True)
@@ -363,7 +380,12 @@ def check_terminal_status(transaction_name: str, create_payment_entry: int | Non
 				response_data,
 				response_data.get("ResponseMessage") or "Terminal still reporting TXN UPLOADED",
 			)
-		return {"success": True, "status": "PENDING", "response_code": response_code, "message": "Waiting on terminal"}
+		return {
+			"success": True,
+			"status": "PENDING",
+			"response_code": response_code,
+			"message": "Waiting on terminal",
+		}
 
 	if response_code in (1, 2, "1", "2"):
 		message = response_data.get("ResponseMessage") or _("Terminal declined")
@@ -397,7 +419,12 @@ def check_terminal_status(transaction_name: str, create_payment_entry: int | Non
 	)
 	txn = txn_service._lock_and_reload(txn)
 	if txn.status in ("SUCCESS", "FAILED", "CANCELLED"):
-		return {"success": True, "status": txn.status, "response_code": response_code, "message": "already finalized"}
+		return {
+			"success": True,
+			"status": txn.status,
+			"response_code": response_code,
+			"message": "already finalized",
+		}
 	txn.response_payload = frappe.as_json(response_data, indent=2)
 	txn.error_message = txn_service._truncate_with_ellipsis(
 		f"Unknown ResponseCode {response_code}: {unknown_msg}", 1000
@@ -458,7 +485,8 @@ def retry_failed_terminal_payment(transaction_name: str) -> dict:
 	if not mode_of_payment:
 		frappe.throw(
 			_("Transaction {0} has no recognised payment method ({1}).").format(
-				transaction_name, txn.payment_method or "—",
+				transaction_name,
+				txn.payment_method or "—",
 			),
 		)
 	return initiate_terminal_payment(
@@ -593,6 +621,7 @@ def _strip_timestamp_mismatch_popup():
 	Other queued messages are preserved.
 	"""
 	import json as _json
+
 	try:
 		log = list(getattr(frappe.local, "message_log", []) or [])
 	except Exception:
@@ -761,10 +790,9 @@ def _load_pinelabs_mode(mode_of_payment, expected_flows):
 	terminal_code = PINELABS_TERMINAL_MODES.get(mode_of_payment)
 	if terminal_code is None:
 		frappe.throw(
-			_(
-				"Mode of Payment {0} is not a Pine Labs Terminal mode. "
-				"Pick one of: {1}."
-			).format(mode_of_payment, ", ".join(PINELABS_TERMINAL_MODES.keys())),
+			_("Mode of Payment {0} is not a Pine Labs Terminal mode. Pick one of: {1}.").format(
+				mode_of_payment, ", ".join(PINELABS_TERMINAL_MODES.keys())
+			),
 		)
 	return {"pinelabs_terminal_code": terminal_code}
 

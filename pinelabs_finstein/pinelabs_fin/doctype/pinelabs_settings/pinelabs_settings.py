@@ -161,7 +161,7 @@ class PinelabsSettings(Document):
 		simply means "record the payment, post nothing to the ledger".
 		"""
 		seen = set()
-		for row in (self.payable_doctypes or []):
+		for row in self.payable_doctypes or []:
 			doctype = (row.doctype_name or "").strip()
 			if not doctype:
 				continue
@@ -215,6 +215,7 @@ class PinelabsSettings(Document):
 					),
 				)
 
+
 def resolve_auto_cancel_minutes(machine_name: str | None = None) -> int:
 	"""Return the gateway auto-cancel timeout for a machine, in minutes.
 
@@ -241,7 +242,7 @@ def resolve_auto_cancel_minutes(machine_name: str | None = None) -> int:
 		return DEFAULT_AUTO_CANCEL_MINUTES
 
 	if machine_name:
-		for machine in (settings.machines or []):
+		for machine in settings.machines or []:
 			if machine.machine_name != machine_name:
 				continue
 			override = cint(getattr(machine, "auto_cancel_duration_in_minutes", 0))
@@ -257,7 +258,7 @@ def get_default_machine_config() -> Document | None:
 	settings = frappe.get_single("Pinelabs Settings")
 	if not cint(settings.enabled):
 		return None
-	for machine in (settings.machines or []):
+	for machine in settings.machines or []:
 		if cint(machine.is_default) and cint(machine.enabled):
 			return machine
 	# Fallback: if exactly one enabled machine exists, treat it as default.
@@ -309,16 +310,15 @@ def resolve_machine_for_context(
 		candidates = [
 			row
 			for row in (settings.machine_mappings or [])
-			if cint(row.is_enabled)
-			and (row.mapping_type, row.reference_name) in context_set
+			if cint(row.is_enabled) and (row.mapping_type, row.reference_name) in context_set
 		]
 		# Deterministic alphabetical tie-break on machine name.
-		candidates.sort(key=lambda r: (r.machine or ""))
+		candidates.sort(key=lambda r: r.machine or "")
 		if candidates:
 			machine_name = candidates[0].machine
 			# Resolve the child-table row on Settings.machines — terminal.py
 			# expects a Machine Config child with all credential fields populated.
-			for machine in (settings.machines or []):
+			for machine in settings.machines or []:
 				if machine.machine_name == machine_name and cint(machine.enabled):
 					return machine
 

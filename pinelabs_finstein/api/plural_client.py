@@ -144,7 +144,9 @@ class PluralClient:
 			data = response.json() if response.text else {}
 		except Exception as exc:
 			print(f"[PineLabs PayByLink] Status ERROR: {exc}")
-			frappe.logger("pinelabs_paybylink", file_count=5).error(f"[PineLabs PayByLink] Status ERROR: {exc}")
+			frappe.logger("pinelabs_paybylink", file_count=5).error(
+				f"[PineLabs PayByLink] Status ERROR: {exc}"
+			)
 			return {"success": False, "error": str(exc)}
 
 		resp_dump = (
@@ -258,7 +260,9 @@ class PluralClient:
 			data = response.json() if response.text else {}
 		except Exception as exc:
 			print(f"[PineLabs PayByLink] Token ERROR: {exc}")
-			frappe.logger("pinelabs_paybylink", file_count=5).error(f"[PineLabs PayByLink] Token ERROR: {exc}")
+			frappe.logger("pinelabs_paybylink", file_count=5).error(
+				f"[PineLabs PayByLink] Token ERROR: {exc}"
+			)
 			return None, str(exc)
 
 		resp_dump = (

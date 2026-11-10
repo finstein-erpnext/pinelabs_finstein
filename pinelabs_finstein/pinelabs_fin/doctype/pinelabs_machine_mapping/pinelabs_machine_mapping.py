@@ -53,9 +53,9 @@ class PinelabsMachineMapping(Document):
 		)
 		if not exists:
 			frappe.throw(
-				_("Machine {0} is not configured in Pinelabs Settings. Add it under Pinelabs Settings → Machines first.").format(
-					self.machine
-				),
+				_(
+					"Machine {0} is not configured in Pinelabs Settings. Add it under Pinelabs Settings → Machines first."
+				).format(self.machine),
 			)
 
 	def _sync_reference_doctype(self):
